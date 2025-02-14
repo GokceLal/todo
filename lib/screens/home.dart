@@ -12,11 +12,19 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final todosList = ToDo.todoList();
+  final _todoController = TextEditingController();
+  List<ToDo> _foundToDo = [];
+
+  @override
+  void initState() {
+    _foundToDo = todosList;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: tdBlack,
+      backgroundColor: const Color.fromARGB(255, 193, 183, 183),
       appBar: _buildAppBar(),
       body: Stack(
         children: [
@@ -35,8 +43,12 @@ class _HomeState extends State<Home> {
                         ),
                       ),
           
-                      for( ToDo todoo in todosList)
-                      TodoItem(todo: todoo,),
+                      for( ToDo todoo in _foundToDo.reversed)  
+                      TodoItem(
+                        todo: todoo,
+                        onToDoChanged: _handleToDoChange,
+                        onDeleteItem: _deleteToDoItem,
+                        ),
                       
           
           
@@ -70,6 +82,7 @@ class _HomeState extends State<Home> {
 
                   ),
                   child: TextField(
+                    controller: _todoController,
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Add a new ToDo items',
@@ -81,8 +94,13 @@ class _HomeState extends State<Home> {
                   margin: EdgeInsets.only(bottom: 20, right: 20),
                
                   child: ElevatedButton(
-                    child: Text('+',style: TextStyle(fontSize: 40,),),
-                    onPressed: () {},
+                    child: Text('+',style: TextStyle(fontSize: 40,
+                    ),
+                    ),
+
+                    onPressed: () {
+                      _addToDoItem(_todoController.text);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: tdBlue,
                       minimumSize: Size(60, 60),
@@ -104,6 +122,37 @@ void _handleToDoChange(ToDo todo){
   });
 }
 
+void _deleteToDoItem(String id){
+  setState(() {
+      todosList.removeWhere((item) => item.id == id);
+  });
+}
+
+void _addToDoItem(String toDo){
+  setState(() {
+    todosList.add(ToDo(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      todoText: toDo,
+    ));
+  });
+
+  _todoController.clear();
+}
+
+
+void _runFilter(String enteredKeyword){
+  List<ToDo> results = [];
+  if(enteredKeyword.isEmpty){
+    results = todosList;
+  } else {
+    results = todosList.where((element) => element.todoText!.toLowerCase().contains(enteredKeyword.toLowerCase())).toList();
+  }
+
+  setState(() {
+    _foundToDo = results;
+  });
+}
+
 Widget searchBox(){
   return    Container(
               padding: EdgeInsets.symmetric(horizontal: 15),
@@ -112,6 +161,7 @@ Widget searchBox(){
                 borderRadius: BorderRadius.circular(20)
               ),
               child: TextField(
+                onChanged: (value) => _runFilter(value),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.all(0),
                   prefixIcon: Icon(Icons.search,color: tdBlack,size: 20,
@@ -130,7 +180,7 @@ Widget searchBox(){
 
 AppBar _buildAppBar() {
   return AppBar(
-    backgroundColor: tdBlack,
+    backgroundColor: const Color.fromARGB(255, 217, 216, 216),
     elevation: 0,
     title: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
